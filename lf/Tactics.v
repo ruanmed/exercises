@@ -74,7 +74,13 @@ Theorem silly_ex :
      oddb 3 = true ->
      evenb 4 = true.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros eq1 eq2. 
+  apply eq2.
+Restart.
+  intros eq1 eq2. 
+  rewrite <- eq2. split.
+Qed.
+
 (** [] *)
 
 (** To use the [apply] tactic, the (conclusion of the) fact
@@ -107,7 +113,13 @@ Theorem rev_exercise1 : forall (l l' : list nat),
      l = rev l' ->
      l' = rev l.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros l l' eq1.
+  rewrite -> eq1.
+  Search rev.
+  symmetry.
+  apply rev_involutive.
+Qed.
+
 (** [] *)
 
 (** **** Exercise: 1 star, standard, optional (apply_rewrite)  
@@ -116,7 +128,8 @@ Proof.
     [rewrite].  What are the situations where both can usefully be
     applied? *)
 
-(* FILL IN HERE 
+(* [apply] is to be used when the goal is exactly the hypothesis, it gives a proof of the current goal. [rewrite] alters the goal to match the reffered hypothesis in context.
+    both can be applied generating the same result when the goal is a hypothesis in context.
 
     [] *)
 
@@ -176,7 +189,18 @@ Example trans_eq_exercise : forall (n m o p : nat),
      (n + p) = m ->
      (n + p) = (minustwo o).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros n m o p eq1 eq2.
+  
+  symmetry in eq2.
+  rewrite -> eq2 in eq1.
+  apply eq1.
+Restart.
+  intros n m o p eq1 eq2.
+  apply trans_eq with (m).
+  - apply eq2.
+  - apply eq1.
+Qed.
+
 (** [] *)
 
 (* ################################################################# *)
@@ -273,7 +297,13 @@ Example injection_ex3 : forall (X : Type) (x y z : X) (l j : list X),
   y :: l = x :: j ->
   x = y.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros X x y z l j.
+  intros eq1 eq2.
+  injection eq2.
+  intros H1 H2. 
+  symmetry. apply H2.
+Qed.
+
 (** [] *)
 
 (** So much for injectivity of constructors.  What about disjointness?
@@ -345,7 +375,11 @@ Example discriminate_ex3 :
     x :: y :: l = [] ->
     x = z.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros X x y z l.
+  intros l2 contra.
+  discriminate contra.
+Qed.
+
 (** [] *)
 
 (** The injectivity of constructors allows us to reason that
