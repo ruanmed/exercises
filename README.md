@@ -1,0 +1,2 @@
+# exercises
+Alguns exercícios feitos
