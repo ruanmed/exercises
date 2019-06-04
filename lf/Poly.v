@@ -6,6 +6,7 @@
 (* Suppress some annoying warnings from Coq: *)
 Set Warnings "-notation-overridden,-parsing".
 From LF Require Export Lists.
+Require Import List.
 
 (* ################################################################# *)
 (** * Polymorphism *)
@@ -1103,7 +1104,7 @@ Definition manual_grade_for_fold_map : option (nat*string) := None.
 (** We can define currying as follows: *)
 
 Definition prod_curry {X Y Z : Type}
-  (f : X * Y -> Z) (x : X) (y : Y) : Z := f (x, y).  
+  (f : X * Y -> Z) (x : X) (y : Y) : Z := f (x, y).
 
 (** As an exercise, define its inverse, [prod_uncurry].  Then prove
     the theorems below to show that the two are inverses. *)
@@ -1121,12 +1122,18 @@ Definition prod_uncurry {X Y Z : Type}
 Example test_map1': map (plus 3) [2;0;2] = [5;3;5].
 Proof. reflexivity.  Qed.
 
+Check plus 3.
+
 
 (** Thought exercise: before running the following commands, can you
     calculate the types of [prod_curry] and [prod_uncurry]? *)
 
 Check @prod_curry.
 Check @prod_uncurry.
+
+Parameter X Y Z: Type.
+Parameter f: X -> Y -> Z.
+Check prod_uncurry f.
 
 Theorem uncurry_curry : forall (X Y Z : Type)
                         (f : X -> Y -> Z)
@@ -1142,7 +1149,7 @@ Theorem curry_uncurry : forall (X Y Z : Type)
   prod_uncurry (prod_curry f) p = f p.
 Proof.
   intros X Y Z f p.
-  unfold prod_curry. unfold prod_uncurry. simpl.
+  unfold prod_curry. unfold prod_uncurry. simpl.  
   destruct p as [x y].
   - reflexivity.
 Qed.
@@ -1164,6 +1171,25 @@ Qed.
    forall X n l, length l = n -> @nth_error X l n = None
 *)
 
+Print length_zero_iff_nil.
+ 
+Theorem length_zero_iff_nil': forall (X: Type), 
+    forall (l: list X),
+    length l = 0 <-> l = [].
+Proof.
+  intros X l.
+  split.
+  - intros H. destruct l.
+    + reflexivity.
+    + simpl in H. inversion H.
+  - intros H. rewrite -> H. simpl. reflexivity.
+Qed.
+
+(*
+Theorem nth_error_involutive: forall (X: Type), forall (l:list X), forall (n: nat), forall (x: X),
+  nth_error [x :: l] (S n) = nth_error l n.
+*)
+  
 Theorem nth_error_length_n : forall (X : Type) (n : nat) (l : list X), 
   length l = n -> @nth_error X l n = None.
 Proof.
@@ -1171,9 +1197,21 @@ Proof.
   intros H.
   induction l as [| x l IHl].
   - simpl. reflexivity.
-  - simpl.
-Admitted.
-(* FILL IN HERE *)
+  - rewrite <- H in IHl.
+Restart.
+  intros X n.
+  induction n.
+  - intros l H. apply length_zero_iff_nil' in H. rewrite -> H. simpl. reflexivity.
+  - intros l H.
+    destruct l.
+     + simpl in H.
+       reflexivity.
+     + simpl in H.
+       inversion H. clear H. specialize (IHn l H1).
+        rewrite -> H1.
+        simpl.
+        exact IHn.
+Qed.
 
 (* Do not modify the following line: *)
 Definition manual_grade_for_informal_proof : option (nat*string) := None.
@@ -1226,11 +1264,19 @@ Definition three : cnat := @doit3times.
 (** Successor of a natural number: given a Church numeral [n],
     the successor [succ n] is a function that iterates its
     argument once more than [n]. *)
-Definition succ (n : cnat) : cnat :=  
+Definition succ (n : cnat) : cnat :=
   fun (X : Type) (f : X -> X) (x : X) => f (n X f x).
+
+Definition succ' (u : cnat) : cnat :=
+  fun (X : Type) (x : X -> X) (y : X) => x (u X x y).
+  
+Check two Type.
   
 Example succ_1 : succ zero = one.
 Proof. unfold succ. unfold one. simpl. unfold zero. simpl. reflexivity. Qed.
+
+Example succ_1' : succ' zero = one.
+Proof. unfold succ', one. simpl. unfold zero. simpl. reflexivity. Qed.
 
 Example succ_2 : succ one = two.
 Proof. unfold succ. unfold two. simpl. unfold one. reflexivity. Qed. 
@@ -1247,9 +1293,17 @@ Compute succ (succ (succ zero)).
 (** Addition of two natural numbers: *)
 Definition plus (n m : cnat) : cnat :=
   fun (X : Type) (f : X -> X) (x : X) => (n X f (m X f x)).
+
+
+Definition plus' (u v : cnat) : cnat :=
+  fun (X : Type) (x: X -> X) (y:  X) =>  u X x (v X x y).
   
 Example plus_1 : plus zero one = one.
 Proof. reflexivity. Qed.
+
+Example plus_1' : plus' zero one = one.
+Proof. reflexivity. Qed.
+
 
 Example plus_2 : plus two three = plus three two.
 Proof. reflexivity. Qed.
@@ -1265,6 +1319,9 @@ Proof. reflexivity. Qed.
 (** Multiplication: *)
 Definition mult (n m : cnat) : cnat :=
   fun (X : Type) (f : X -> X) (x : X) => (n X (m X f) x).
+
+Definition mult' (u v : cnat) : cnat :=
+  fun (X : Type) (x : X -> X) (y : X) => (u X (v X x) y).
 
 Example mult_1 : mult one one = one.
 Proof. reflexivity. Qed. 
@@ -1288,6 +1345,13 @@ Proof. unfold plus. unfold three. unfold doit3times. reflexivity. Qed.
 
 Definition exp (n m : cnat) : cnat :=
   fun (X : Type) (f : X -> X) (x : X) => m (X -> X) (n X) f x.
+
+Check exp.
+
+Definition exp' (u v : cnat) : cnat :=
+  fun (X : Type) (x : X -> X) (y : X) => v (X -> X) (u X) x y.
+
+Compute cnat.
   
 Example exp_1 : exp two two = plus two two.
 Proof. reflexivity. Qed.
