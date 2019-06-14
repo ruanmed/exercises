@@ -448,12 +448,18 @@ Proof.
 
     Practice using "in" variants in this proof.  (Hint: use
     [plus_n_Sm].) *)
-
+Require Import Omega. 
 Theorem plus_n_n_injective : forall n m,
      n + n = m + m ->
      n = m.
 Proof.
   intros n. induction n as [| n'].
+    - intros m H.
+      omega.
+    - intros m H.
+      Check plus_n_Sm.
+      injection H.
+      rewrite -> plus_n_Sm.
   (* FILL IN HERE *) Admitted.
 (** [] *)
 
