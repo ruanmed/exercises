@@ -79,6 +79,11 @@ Proof.
 Restart.
   intros eq1 eq2. 
   rewrite <- eq2. split.
+  
+Restart.
+  intros eq1 eq2.
+  specialize (eq1 2).
+  apply eq2.
 Qed.
 
 (** [] *)
@@ -458,9 +463,18 @@ Proof.
       omega.
     - intros m H.
       Check plus_n_Sm.
-      injection H.
-      rewrite -> plus_n_Sm.
-  (* FILL IN HERE *) Admitted.
+      omega.
+      Restart.
+      intros n m H.
+      replace (n+n) with (2*n) in H.
+      - replace (m+m) with (2*m) in H.
+        * Check Nat.mul_cancel_l.
+          apply Nat.mul_cancel_l in H.
+          + exact H.
+          + omega.
+        * omega.
+      - omega. 
+Qed.
 (** [] *)
 
 (* ################################################################# *)
@@ -562,6 +576,8 @@ Proof.
     statement at the point where the [induction] tactic is invoked on
     [n]: *)
 
+Print double.
+
 Theorem double_injective : forall n m,
      double n = double m ->
      n = m.
@@ -589,10 +605,11 @@ Proof.
     + (* m = O *) simpl.
 
 (** The 0 case is trivial: *)
-
+      simpl in eq.
       discriminate eq.
 
     + (* m = S m' *)
+      Check f_equal.
       apply f_equal.
 
 (** At this point, since we are in the second branch of the [destruct
@@ -603,7 +620,7 @@ Proof.
     performed automatically by the [apply] in the next step), then
     [IHn'] gives us exactly what we need to finish the proof. *)
 
-      apply IHn'. injection eq as goal. apply goal. Qed.
+      apply IHn'. simpl in eq. injection eq as goal. apply goal. Qed.
 
 (** What you should take away from all this is that we need to be
     careful, when using induction, that we are not trying to prove
@@ -612,12 +629,34 @@ Proof.
     generic. *)
 
 (** The following exercise requires the same pattern. *)
+Check true.
+Print eqb.
+Print " =? ".
 
+Notation "x =? y" := (eqb x y) (at level 70) : nat_scope. 
+
+Theorem beq_nat_true: forall n m : nat,
+ (n =? m) = true -> n = m.
+Proof.
+  induction n.
+  - destruct m.
+    * simpl. auto.
+    * intros H. discriminate.
+  - destruct m.
+    * simpl. intros H. discriminate.
+    * intros H. apply f_equal. apply IHn. auto.
+Qed.
 (** **** Exercise: 2 stars, standard (eqb_true)  *)
 Theorem eqb_true : forall n m,
     n =? m = true -> n = m.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros n. destruct n as [| n'].
+  - intros m H. Search ( _ =? _ ).
+
+    apply beq_nat_true in H. exact H.
+  - intros m H. apply beq_nat_true in H. exact H.
+Qed.
+
 (** [] *)
 
 (** **** Exercise: 2 stars, advanced (eqb_true_informal)  
@@ -675,7 +714,7 @@ Theorem double_injective_take2 : forall n m,
 Proof.
   intros n m.
   (* [n] and [m] are both in the context *)
-  generalize dependent n.
+  generalize dependent n. (* pode ser um revert n também, no entanto existe uma diferença). *)
   (* Now [n] is back in the goal and we can do induction on
      [m] and get a sufficiently general IH. *)
   induction m as [| m'].
@@ -731,6 +770,8 @@ Proof.
     let's digress briefly and use [eqb_true] to prove a similar
     property of identifiers that we'll need in later chapters: *)
 
+Print eqb_id.
+Check Id.
 Theorem eqb_id_true : forall x y,
   eqb_id x y = true -> x = y.
 Proof.
