@@ -788,6 +788,23 @@ Theorem nth_error_after_last: forall (n : nat) (X : Type) (l : list X),
      length l = n ->
      nth_error l n = None.
 Proof.
+  intros n X l.
+  generalize dependent n.
+  induction l.  
+  - intros n. intros eq. simpl. reflexivity.
+  - intros n. Print nth_error. intros eq. simpl in eq.
+    Search (_ =? 0 = false). simpl. rewrite <- eq.
+    specialize IHl with ((n -1 )).
+    rewrite S_nbeq_0. simpl.
+    assert (H' : (S (length l) = n) -> ((length l) = n -1)).
+    + simpl. intros eq2. omega.
+    + rewrite -> H' in eq. simpl in eq.
+    induction n.
+    + simpl in IHl.
+     generalize dependent x.
+    intros H1. simpl.
+  Restart.
+  induction l.
   (* FILL IN HERE *) Admitted.
 (** [] *)
 
