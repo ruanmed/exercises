@@ -796,16 +796,22 @@ Proof.
     Search (_ =? 0 = false). simpl. rewrite <- eq.
     specialize IHl with ((n -1 )).
     rewrite S_nbeq_0. simpl.
-    assert (H' : (S (length l) = n) -> ((length l) = n -1)).
-    + simpl. intros eq2. omega.
-    + rewrite -> H' in eq. simpl in eq.
-    induction n.
-    + simpl in IHl.
-     generalize dependent x.
-    intros H1. simpl.
+    assert (H' : length l = n-1) by omega.
+    rewrite -> H'. rewrite -> IHl.
+    + reflexivity.
+    + exact H'.
   Restart.
+  intros n X l.
+  revert n.
   induction l.
-  (* FILL IN HERE *) Admitted.
+  - intros n. intros eq. simpl. reflexivity.
+  - intros n H. simpl in H. 
+    assert (H' : length l = n-1). 
+    { omega. }
+    specialize (IHl (n-1) H').
+    simpl. rewrite <- H. rewrite S_nbeq_0. simpl.
+    rewrite -> H'. exact IHl.
+    Qed.
 (** [] *)
 
 (* ################################################################# *)
@@ -838,7 +844,7 @@ Proof.
     about multiplication at our disposal.  In particular, we know that
     it is commutative and associative, and from these it is not hard
     to finish the proof. *)
-
+  Check mult_assoc.
   rewrite mult_assoc.
   assert (H : n * m * n = n * n * m).
     { rewrite mult_comm. apply mult_assoc. }
@@ -904,7 +910,7 @@ Abort.
 
 Fact silly_fact_2 : forall m, bar m + 1 = bar (m + 1) + 1.
 Proof.
-  intros m.
+  intros m. 
   destruct m eqn:E.
   - simpl. reflexivity.
   - simpl. reflexivity.
@@ -990,7 +996,50 @@ Theorem combine_split : forall X Y (l : list (X * Y)) l1 l2,
   split l = (l1, l2) ->
   combine l1 l2 = l.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros X Y l l1 l2.
+  induction l.
+  - simpl. intros H.
+    inversion H.
+    simpl. reflexivity.
+  - intros H.
+    inversion H.
+    destruct x eqn:E1.
+     destruct l1, l2.
+     + simpl. simpl in IHl. simpl in H. 
+     
+Restart. 
+  intros X Y.
+  induction l. 
+  - intros l1 l2 H. simpl in H. inversion H.
+    simpl. reflexivity.
+  - intros l1 l2 H.
+    destruct l1, l2.
+    + destruct x as (a,b). simpl in H. 
+      destruct (split l) as (m,n).
+      inversion H.
+    + destruct x as (a,b). simpl in H. 
+      destruct (split l) as (m,n).
+      inversion H.
+    + destruct x as (a,b). simpl in H. 
+      destruct (split l) as (m,n).
+      inversion H.
+    + destruct x as (a,b).
+      simpl in H. destruct (split l) as (m,n) eqn:E1.
+      inversion H. simpl. rewrite <- H2. rewrite <- H4.
+      specialize (IHl m n eq_refl). rewrite <- IHl. reflexivity.
+Restart.
+  intros X Y.
+  induction l. 
+  - intros l1 l2 H. simpl in H. inversion H.
+    simpl. reflexivity.
+  - intros l1 l2 H.
+    destruct l1, l2;
+      destruct x as (a,b); simpl in H;
+      destruct (split l) as (m,n) eqn:E1;
+      inversion H. 
+      simpl. rewrite <- H2. rewrite <- H4.
+      specialize (IHl m n eq_refl). rewrite <- IHl. reflexivity.
+Qed.
 (** [] *)
 
 (** The [eqn:] part of the [destruct] tactic is optional: We've chosen
@@ -1066,7 +1115,28 @@ Theorem bool_fn_applied_thrice :
   forall (f : bool -> bool) (b : bool),
   f (f (f b)) = f b.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros f b.
+  destruct (f (f (f b))) eqn:B1.
+  - destruct (f (f b)) eqn:B2.
+    + destruct (f b) eqn:B3.
+      * reflexivity.
+      * destruct (f b) eqn:B4.
+        { discriminate B3. }
+  Restart.
+  intros f b.
+  destruct b eqn:B1.
+  - destruct (f true) eqn:B2.
+    + repeat rewrite -> B2. reflexivity.
+    + destruct (f false) eqn:B3.
+      * exact B2.
+      * exact B3.
+  - destruct (f false) eqn:B2.
+    + destruct (f true) eqn:B3.
+      * exact B3.
+      * exact B2. 
+    + repeat rewrite -> B2. reflexivity.
+Qed.
+
 (** [] *)
 
 (* ################################################################# *)
